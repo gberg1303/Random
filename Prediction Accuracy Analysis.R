@@ -44,7 +44,11 @@ Predictions_Dataset <- games %>%
               select(home_team, away_team, season, week, espn_home_wp, numberfire) %>%
               mutate(week = ifelse(week == 22, week-1, week)) %>%
               rename(numberfire_home_wp = numberfire),
-            by = c("home_team", "away_team", "season", "week"))
+            by = c("home_team", "away_team", "season", "week")) %>%
+  # Add an Extremized Version of adjusted_epa
+  mutate(
+    extremized_adjusted_epa_home_wp = ifelse(adjusted_epa_home_wp > .5, adjusted_epa_home_wp+adjusted_epa_home_wp*.1, adjusted_epa_home_wp-adjusted_epa_home_wp*.1)
+  )
     
 
 
@@ -56,7 +60,7 @@ Accuracy_Dataset <- Predictions_Dataset %>%
     correct_adjusted_epa = ifelse(ifelse(adjusted_epa_home_wp > .5, 1, 0) == win, 1, 0),
     correct_espn = ifelse(ifelse(espn_home_wp > .5, 1, 0) == win, 1, 0),
     correct_numberfire = ifelse(ifelse(numberfire_home_wp > .5, 1, 0) == win, 1, 0),
-    correct_fivethirtyeight = ifelse(ifelse(fivethirtyeight_home_wp > .5, 1, 0) == win, 1, 0),
+    correct_fivethirtyeight = ifelse(ifelse(fivethirtyeight_home_wp > .5, 1, 0) == win, 1, 0)
   ) %>%
   # Pivot Longer to allow group_by and summarize
   pivot_longer(
@@ -274,6 +278,6 @@ Predictions_Dataset %>%
                             correct_adjusted_epa == correct_fivethirtyeight & 
                             correct_adjusted_epa == correct_numberfire, 0, 1)
   ) %>%
-  filter(correct_adjusted_epa == 0 & correct_espn == 1 & correct_numberfire == 1 & correct_fivethirtyeight == 1)
+  filter(correct_adjusted_epa == 0 & correct_espn == 1 & correct_numberfire == 1 & correct_fivethirtyeight == 1) %>% view()
   
 
