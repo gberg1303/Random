@@ -18,7 +18,7 @@ fantasy_data <- fantasy_data %>%
   filter(!is.na(auctionValue))
 
 ### Grab Historical Priors
-historic_predictions <- read_csv("/Users/jonathangoldberg/Google Drive/Random/Sports/Fantasy Football/Projection Scraping/Dependent Files/Historical_Projection_Baselines.csv") %>%
+historic_predictions <- read_csv("/Users/jonathangoldberg/Google Drive/Random/Sports/Data Twitter Account/Random/Fantasy Auction Draft Values/Historical_Projection_Baselines.csv") %>%
 # Add an ID for some more mutating
     left_join(
     data.frame(
@@ -147,6 +147,7 @@ av_data %>%
   ggsave(("/Users/jonathangoldberg/Downloads/Optimal Auction Top 5.jpeg"), width = 16, height = 8.4, unit = "in")
 
 
+
 # Top 10 Best Spending
 av_data %>%
   ungroup() %>%
@@ -159,6 +160,7 @@ av_data %>%
   geom_bar(stat = "identity") +
   geom_text(aes(label=round(star_chance, 3)), position=position_dodge(width=0.9), vjust=-0.25, size = 4, ) +
   theme_minimal() + 
+#  facet_wrap(facets = vars(Position), scales = "free")+
   theme(legend.position = "none", 
         plot.title = element_text(face = "bold", size = 28), 
         axis.text.x = element_text(angle = 10, size = 9),
