@@ -12,6 +12,17 @@ Personal_Predictions <- Model_Dataset %>%
   mutate(adjusted_epa_home_wp = caret::predict.train(newdata = Model_Dataset %>% mutate(win = as.factor(win)) %>% filter(season >= 2018), object = Goldberg_Model, type = "prob")[,2]) %>%
   select(game_id, win, adjusted_epa_home_wp) 
 
+Personal_Predictions <- Model_Dataset %>%
+  filter(season >= 2018) %>%
+  #mutate(adjusted_epa_home_wp = predict(newdata = Model_Dataset %>% filter(season >= 2018) %>% mutate_if(is.numeric, function(x) ((x - min(x)) / (max(x) - min(x)))), object = Goldberg_Model, type = "response")) %>%
+  mutate(adjusted_epa_home_wp = predict(newdata = xgb.DMatrix(data = Model_Dataset %>% mutate(win = as.factor(win)) %>% filter(season >= 2018) %>% select(point_differential, adjusted_off_epa, adjusted_def_epa,
+                                                                                                                                                          opp_point_differential, opp_adjusted_off_epa, opp_adjusted_def_epa) %>% as.matrix(), 
+                                                              label = Model_Dataset %>% mutate(win = as.factor(win)) %>% filter(season >= 2018) %>% select(win) %>% as.matrix()), 
+                                        object = xgboost_model)
+  ) %>%
+  select(game_id, win, adjusted_epa_home_wp) 
+
+
 ### Load FiveThirtyEight Predictions
 FiveThirtyEight_Elo <- read_csv("https://projects.fivethirtyeight.com/nfl-api/nfl_elo.csv") %>%
   dplyr::mutate(team1 = gsub("WSH", "WAS", team1),
