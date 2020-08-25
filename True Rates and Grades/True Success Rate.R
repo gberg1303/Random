@@ -22,7 +22,8 @@ QB_Data <- NFL_PBP %>%
   ) %>%
   mutate(Composite = cpoe*.009+EPA*.2+.09) %>%
   filter(!is.na(passer_player_name)) %>%
-  filter(Dropbacks > 0)
+  filter(Dropbacks > 0) %>%
+  collect()
 
 
 # Create an empirical beta prior. Ebbr available from: https://github.com/dgrtwo/ebbr
@@ -69,7 +70,7 @@ QB_Data %>%
   geom_text(aes(y = .high, label = passer_player_name, hjust = -.05, angle = 0), size = 3) +
   coord_flip() + 
   theme_minimal() +
-  scale_colour_gdocs() +
+  #scale_colour_gdocs() +
   theme(legend.position = "none", 
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
