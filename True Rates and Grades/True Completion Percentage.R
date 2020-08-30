@@ -10,7 +10,7 @@ library(scales)
 
 # group and summarize 
 QB_Data <- NFL_PBP %>%
-  filter(pass == 1, !is.na(cpoe),!is.na(epa)) %>%
+  filter(pass == 1, !is.na(cpoe),!is.na(epa), season > 2010) %>%
   group_by(passer_player_name) %>%
   summarise(
     Dropbacks = sum(qb_dropback),
@@ -20,7 +20,7 @@ QB_Data <- NFL_PBP %>%
     cpoe = mean(cpoe, na.rm = TRUE)
   ) %>%
   mutate(Composite = cpoe*.009+EPA*.2+.09) %>%
-  filter(!is.na(passer_player_name))
+  filter(!is.na(passer_player_name)) %>% collect()
 
 # Create an empirical beta prior. Ebbr available from: https://github.com/dgrtwo/ebbr
 # Now fit each player's actual results to the prior
@@ -72,5 +72,5 @@ QB_Data %>%
         axis.title.y = element_blank(),
         plot.title = element_text(face = "bold")) +
   labs(y = "'True' Completion Percentage",
-       title = paste0(min(NFL_PBP$season), "-", max(NFL_PBP$season), " 'True' Completion Percentage for NFL Quarterbacks"))
+       title = paste0("'True' Completion Percentage for NFL Quarterbacks"))
 

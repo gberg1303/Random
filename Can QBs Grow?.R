@@ -28,8 +28,8 @@ QB_Data <- NFL_PBP %>%
             by = c("passer_player_name", "posteam", "season")) %>%
   ungroup() %>%
   # Filter and get percentile
-  filter(Dropbacks > 150) %>%
-  mutate(Composite = cpoe*.009+EPApd*.21+.09,
+  filter(Dropbacks > 50) %>%
+  mutate(Composite = cpoe*.009+EPApd*.21+.12,
          Composite_Percentile = percent_rank(Composite), 
          cpoe_percentile = percent_rank(cpoe)) %>% 
   # Compare to prior years to find biggest jumps
@@ -41,6 +41,59 @@ QB_Data <- NFL_PBP %>%
   collect()
 
 
+
+### Let's keep all QBs who had two or more seasons above 75th percentile
+QB_Data %>%
+  group_by(passer_player_name) %>%
+  mutate(filter_condition = ifelse(Composite_Percentile > .75, 1, 0),
+         elite_seasons = sum(filter_condition)) %>%
+  ungroup() %>%
+  select(-filter_condition) %>%
+  filter(elite_seasons >= 2) %>% View()
+
+
+# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Ignore
 
 ### Lets Visualize Over Time- Create Weekly Dataset
 QB_Data <- NFL_PBP %>%
@@ -66,35 +119,48 @@ QB_Data <- NFL_PBP %>%
             by = c("passer_player_name", "posteam", "season", "week", "game_date")) %>%
   ungroup() %>%
   # Filter and get percentile
-  mutate(Composite = cpoe*.009+EPApd*.21+.09,
+  mutate(Composite = cpoe*.009+EPApd*.21+.12,
          Composite_Percentile = percent_rank(Composite)) %>% 
   # Compare to prior years to find biggest jumps
   group_by(passer_player_name) %>%
   arrange(passer_player_name) %>%
-  mutate(Dropbacks = sum(Dropbacks)) %>%
+  mutate(Dropbacks = sum(Dropbacks),
+         seasons = (n_distinct(season))) %>%
+  ungroup() %>%
+  mutate(DP_per_season = Dropbacks/seasons) %>%
   # Filter non-important DP
-  filter(Dropbacks > 150) %>%
+  filter(DP_per_season > 375) %>%
   # add moving average
   mutate(moving_composite = pracma::movavg(Composite, n = 3)) %>%
-  left_join(nflfastR::teams_colors_logos %>% select(team_abbr, team_color),
-            by = c("posteam" = "team_abbr"))
-
-### Make Graphs to Visualize Over Time
-QB_Data %>%
-  group_by(season) %>%
+  # add lines for graph
   mutate(low_qb = quantile(moving_composite, .25),
          med_qb = quantile(moving_composite, .5),
          high_qb = quantile(moving_composite, .85)) %>%
-  ungroup() %>%
-  filter(season > 2016) %>%
-  filter(Dropbacks > 2500) %>%
+  # add team colors
+  left_join(nflfastR::teams_colors_logos %>% select(team_abbr, team_color),
+            by = c("posteam" = "team_abbr")) 
+  
+
+### Make Graphs to Visualize Over Time
+QB_Data %>%
+  filter(season >= 2010) %>%
   ggplot(aes(x = game_date, y = moving_composite, group = passer_player_name)) +
   geom_line(aes(color = team_color)) +
   scale_color_manual(values = set_names(unique(QB_Data$team_color), as.vector(unique(QB_Data$team_color)))) + 
   theme_minimal() +
-  geom_hline(aes(yintercept = med_qb), size = .09) +
-  geom_hline(aes(yintercept = high_qb), size = .09, color = "light blue") +
-  geom_hline(aes(yintercept = low_qb), size = .09, color = "red") +
+  geom_hline(aes(yintercept = med_qb)) +
+  geom_hline(aes(yintercept = high_qb), color = "light blue") +
+  geom_hline(aes(yintercept = low_qb), color = "red") +
+  geom_vline(aes(xintercept = "2010-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2011-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2012-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2013-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2014-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2015-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2016-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2017-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2018-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2019-01-01"), size = .12, linetype = 4) +
   facet_wrap(facets = vars(passer_player_name)) +
   theme(
     legend.position = "none"
@@ -105,5 +171,5 @@ QB_Data %>%
     title = "Moving Average of Quarterback Composite Ratings",
     caption = "@gberg1303 | Composite Rating from @benbbaldwin | data from @nflfastR"
   ) +
-  gganimate::transition_reveal(as.Date(game_date))
+  ggsave("/Users/jonathangoldberg/Downloads/plot.jpeg", limitsize = FALSE, device = "jpeg")
 

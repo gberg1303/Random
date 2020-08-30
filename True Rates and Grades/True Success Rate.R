@@ -76,5 +76,5 @@ QB_Data %>%
         axis.title.y = element_blank(),
         plot.title = element_text(face = "bold")) +
   labs(y = "'True' Dropback Success Rate",
-       title = paste0(min(NFL_PBP$season), "-", max(NFL_PBP$season), " 'True' Dropback Success Rate for NFL Quarterbacks"))
+       title = paste0(" 'True' Dropback Success Rate for NFL Quarterbacks"))
 

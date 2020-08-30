@@ -68,10 +68,11 @@ Go_For_It_Data <- NFL_PBP %>%
 
 animate(
   Go_For_It_Data %>%
+    filter(season > 2005) %>%
     group_by(season) %>%
     mutate(order = rank(-GO_Rate, ties.method = "random")) %>%
     arrange(order) %>%
-    ggplot(aes(x = order, y = GO_Rate)) + 
+    ggplot(aes(x = posteam, y = GO_Rate)) + 
     theme_minimal() +
     geom_bar(stat = "identity", size = 1, width = .5, aes(color = team_color2, fill = team_color)) +
     geom_image(aes(image = team_logo_espn), size = .05, nudge_y = 1) +
@@ -88,5 +89,6 @@ animate(
          title = paste0("NFL ({frame_time}): 4th Down Go-For-It Rate*"), 
          caption = "@gberg1303 | nflfastR | Within 20-80% Win Probabilty | *On Plays Recommended by the NYT") +
     gganimate::transition_time(season),
-  width = 1024, height = 512, duration = 63, fps = 20
+  width = 1024, height = 512, end_pause = 10, fps = 20, duration = 12
 )
+
