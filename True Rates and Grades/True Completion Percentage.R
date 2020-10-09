@@ -17,7 +17,8 @@ QB_Data <- NFL_PBP %>%
     Attempts = sum(pass_attempt),
     Completions = sum(complete_pass),
     EPA = mean(epa, na.rm = TRUE),
-    cpoe = mean(cpoe, na.rm = TRUE)
+    cpoe = mean(cpoe, na.rm = TRUE),
+    touchdowns = sum(touchdown)
   ) %>%
   mutate(Composite = cpoe*.009+EPA*.2+.09) %>%
   filter(!is.na(passer_player_name)) %>% collect()

@@ -97,6 +97,7 @@ QB_Data %>%
 
 ### Lets Visualize Over Time- Create Weekly Dataset
 QB_Data <- NFL_PBP %>%
+  filter(season < 2020) %>%
   # Get CPOE
   filter(!is.na(cpoe)) %>%
   filter(!is.na(epa), play_type=="no play" | play_type=="pass" | play_type=="run") %>%
@@ -129,17 +130,18 @@ QB_Data <- NFL_PBP %>%
   ungroup() %>%
   mutate(DP_per_season = Dropbacks/seasons) %>%
   # Filter non-important DP
-  filter(DP_per_season > 375) %>%
+  filter(DP_per_season > 150) %>%
   # add moving average
   mutate(moving_composite = pracma::movavg(Composite, n = 3)) %>%
-  # add lines for graph
-  mutate(low_qb = quantile(moving_composite, .25),
-         med_qb = quantile(moving_composite, .5),
-         high_qb = quantile(moving_composite, .85)) %>%
   # add team colors
-  left_join(nflfastR::teams_colors_logos %>% select(team_abbr, team_color),
-            by = c("posteam" = "team_abbr")) 
-  
+  left_join(nflfastR::teams_colors_logos %>% select(team_abbr, team_color, team_color2),
+            by = c("posteam" = "team_abbr")) %>%
+  # add lines for graph
+  mutate(low_qb = quantile(moving_composite, .25, na.rm = FALSE),
+         med_qb = quantile(moving_composite, .5, na.rm = FALSE),
+         high_qb = quantile(moving_composite, .85, na.rm = FALSE))
+
+QB_Average <- QB_Data %>% pull(Composite) %>% median()
 
 ### Make Graphs to Visualize Over Time
 QB_Data %>%
@@ -172,4 +174,39 @@ QB_Data %>%
     caption = "@gberg1303 | Composite Rating from @benbbaldwin | data from @nflfastR"
   ) +
   ggsave("/Users/jonathangoldberg/Downloads/plot.jpeg", limitsize = FALSE, device = "jpeg")
+
+
+
+QB_Data %>%
+  filter(passer_player_name == "P.Mahomes") %>%
+  ggplot(aes(x = game_date, y = moving_composite,  group = passer_player_name)) +
+  geom_line(aes(color = team_color,)) +
+  scale_color_manual(values = set_names(unique(QB_Data$team_color), as.vector(unique(QB_Data$team_color)))) + 
+  theme_minimal() +
+  geom_hline(aes(yintercept = QB_Average)) +
+  geom_vline(aes(xintercept = "2010-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2011-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2012-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2013-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2014-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2015-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2016-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2017-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2018-01-01"), size = .12, linetype = 4) +
+  geom_vline(aes(xintercept = "2019-01-01"), size = .12, linetype = 4) +
+  #facet_wrap(facets = vars(season)) +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 70, size = 8),
+    plot.title = element_text(face = "bold"), 
+    axis.title.x = element_text(face = "bold"),
+    axis.title.y = element_text(face = "bold")
+  ) +
+  labs(
+    x = "Date",
+    y = "Composite Rating (Moving Average)",
+    title = "Patrick Mahomes: Moving Average of Quarterback Composite Ratings",
+    caption = "@gberg1303 | Composite Rating from @benbbaldwin | data from @nflfastR"
+  ) +
+  ggsave("/Users/jonathangoldberg/Downloads/plot.jpeg", limitsize = FALSE, device = "jpeg", width = 18, height = 10)
 

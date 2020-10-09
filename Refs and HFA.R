@@ -13,6 +13,8 @@ NFL_PBP <- tbl(dbConnect(SQLite(), "/Users/jonathangoldberg/Google Drive/Random/
                "nflfastR_pbp")
 
 ### Load Referee Data
-Game_IDs <- purrr::map_df(2015:2019, function(x) espnNFLscraper::get_game_ids(season = x, season_type = "regular"))
-Ref_Data <- espnNFLscraper::get_game_details(espn_gameids = Game_IDs$espn_gameid)
-Ref_Data <- get_game_details(espn_gameids = espn_nfl_ids %>% filter(season == 2019 & season_type == 2) %>% pull(espn_gameid))
+get_official_data <- function(){
+  
+  
+  
+}
