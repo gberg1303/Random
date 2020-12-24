@@ -78,3 +78,76 @@ QB_Data %>%
   labs(y = "'True' Dropback Success Rate",
        title = paste0(" 'True' Dropback Success Rate for NFL Quarterbacks"))
 
+
+
+#### RB ###
+##### True Composite Grade does not work because the formula is based on attepmts and successes.
+
+# group and summarize 
+RB_data <- NFL_PBP %>%
+  filter(rush == 1, !is.na(epa)) %>%
+  group_by(rusher_player_name, rusher_player_id) %>%
+  summarise(
+    Attempts = sum(rush_attempt, na.rm = TRUE),
+    EPA = mean(epa, na.rm = TRUE),
+    Success = sum(success, na.rm = TRUE)
+  ) %>%
+  filter(!is.na(rusher_player_name)) %>%
+  filter(Attempts > 0) %>%
+  collect()
+
+
+# Create an empirical beta prior. Ebbr available from: https://github.com/dgrtwo/ebbr
+# Now fit each player's actual results to the prior
+RB_data <- augment(RB_data %>% 
+                     ebb_fit_prior(Success, Attempts), data = RB_data) %>% 
+  arrange(-.fitted)
+
+# Add Tiers based on fitted values
+scoreThreshold <- .75
+setTier <- function(points){
+  threshold <- scoreThreshold
+  if(is.na(threshold))
+    threshold <- 20
+  tiers <- rep(as.numeric(NA), length(points))
+  tierNum <- 1
+  points.order <- order(-points)
+  points <- points[points.order]
+  repeat{
+    tiers[points >= floor(max(points[is.na(tiers)]) - threshold) & is.na(tiers)] <- tierNum
+    
+    if(all(!is.na(tiers)))
+      break
+    tierNum <- tierNum + 1
+  }
+  tiers[points.order] <- tiers
+  return(tiers)
+}
+RB_data <- RB_data %>%
+  mutate(tier = setTier(.fitted*100))
+
+rm(scoreThreshold, clusterTier, simpleCap, setTier)
+
+
+# Graph it
+RB_data %>%
+  ungroup() %>%
+  filter(Attempts >= 800) %>%
+  mutate(rusher_player_id = factor(rusher_player_id, levels = rusher_player_id[order(.fitted)])) %>%
+  ggplot() +  
+  aes(x = rusher_player_id, y = .fitted, ymin = .low, ymax = .high, color = as.factor(tier)) +
+  geom_errorbar(width = .3) + 
+  geom_point(size = 6, color = "white") + 
+  geom_text(aes(y = .fitted, label = round(.fitted, 2)), size = 3) +
+  geom_text(aes(y = .high, label = rusher_player_name, hjust = -.05, angle = 0), size = 3) +
+  coord_flip() + 
+  theme_minimal() +
+  scale_colour_gdocs() +
+  theme(legend.position = "none", 
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        plot.title = element_text(face = "bold")) +
+  labs(y = "'True' Rush Success Rate",
+       title = paste0(" 'True' Rush Success Rate for NFL Backs"))
+
+
